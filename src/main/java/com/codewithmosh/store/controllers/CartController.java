@@ -2,17 +2,21 @@ package com.codewithmosh.store.controllers;
 
 import com.codewithmosh.store.dtos.AddCartItemRequest;
 import com.codewithmosh.store.dtos.CartDto;
+import com.codewithmosh.store.dtos.CartItemDto;
+import com.codewithmosh.store.dtos.UpdateCartItemRequest;
 import com.codewithmosh.store.entities.Cart;
 import com.codewithmosh.store.entities.CartItem;
 import com.codewithmosh.store.mappers.CartMapper;
 import com.codewithmosh.store.repositories.CartRepository;
 import com.codewithmosh.store.repositories.ProductRepository;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -88,5 +92,33 @@ public class CartController {
         var cartItemDto = cartMapper.toDto(cart);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(cartItemDto);
+    }
+
+    @PatchMapping("/{cartId}/items/{productId}")
+    public ResponseEntity<?> updateItemInCart(
+            @PathVariable UUID cartId,
+            @PathVariable Long productId,
+            @Valid @RequestBody UpdateCartItemRequest request
+    ) {
+        var cart = cartRepository.findById(cartId).orElse(null);
+        if (cart == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Cart not found"));
+
+        }
+
+        var cartItem = cart.getCartItems()
+                .stream()
+                .filter(cartItemDto -> cartItemDto.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElse(null);
+
+        if (cartItem == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Product not found in cart"));
+        }
+
+        cartItem.setQuantity(request.getQuantity());
+        cartRepository.save(cart);
+
+        return ResponseEntity.ok(cartMapper.toDto(cartItem));
     }
 }
