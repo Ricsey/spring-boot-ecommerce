@@ -1,5 +1,6 @@
 package com.codewithmosh.store.entities;
 
+import com.codewithmosh.store.exceptions.ProductNotFoundException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +29,7 @@ public class Cart {
     @Column(name = "date_created", insertable = false, updatable = false)
     private LocalDate dateCreated;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.MERGE)
+    @OneToMany(mappedBy = "cart", orphanRemoval = true, cascade = CascadeType.MERGE)
     private Set<CartItem> cartItems = new LinkedHashSet<>();
 
     public BigDecimal computeTotalPrice() {
@@ -39,5 +40,49 @@ public class Cart {
         }
 
         return totalPrice;
+    }
+
+    public CartItem getItem(Long productId) {
+        for (CartItem cartItem : cartItems) {
+            if (cartItem.getProduct().getId().equals(productId)) {
+                return cartItem;
+            }
+        }
+
+        return null;
+    }
+
+    public CartItem addItem(Product product) {
+        var cartItem = getItem(product.getId());
+
+        if (cartItem != null) {
+            cartItem.setQuantity(cartItem.getQuantity() + 1);
+        } else {
+            cartItem = new CartItem();
+            cartItem.setProduct(product);
+            cartItem.setQuantity(1);
+
+            cartItem.setCart(this);
+            cartItems.add(cartItem);
+        }
+
+        return cartItem;
+
+    }
+
+    public void updateItemQuantity(Long productId, Integer quantity) {
+        var cartItem = getItem(productId);
+        if (cartItem == null) {
+            throw new ProductNotFoundException();
+        }
+        cartItem.setQuantity(quantity);
+    }
+
+    public void deleteItem(Long productId) {
+        cartItems.removeIf(cartItem -> cartItem.getProduct().getId().equals(productId));
+    }
+
+    public void clearCartItems() {
+        cartItems.clear();
     }
 }
