@@ -1,5 +1,7 @@
 package com.codewithmosh.store.services;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
@@ -22,5 +24,28 @@ public class JwtService {
                 .compact();
 
         return token;
+    }
+
+    private Claims getClaimsFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(secret.getBytes()))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            var claims = getClaimsFromToken(token);
+            return claims.getExpiration().after(new Date());
+        }
+        catch (JwtException e) {
+            return false;
+        }
+    }
+
+    public String getEmailFromToken(String token) {
+        var claims = getClaimsFromToken(token);
+        return claims.getSubject();
     }
 }

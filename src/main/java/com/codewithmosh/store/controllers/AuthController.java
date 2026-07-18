@@ -38,4 +38,11 @@ public class AuthController {
     public ResponseEntity<Void> handleBadCredentialsException() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
+    @PostMapping("/validate")
+    public boolean validate(@RequestHeader("Authorization") String authHeader) {
+        System.out.println("Validate called");
+        var token = authHeader.replace("Bearer ", "");
+        return jwtService.validateToken(token);
+    }
 }
