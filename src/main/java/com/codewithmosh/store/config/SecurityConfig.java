@@ -1,6 +1,9 @@
 package com.codewithmosh.store.config;
 
+import com.codewithmosh.store.entities.Role;
 import com.codewithmosh.store.filters.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +24,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import com.codewithmosh.store.filters.LoginFilter;
+
+import org.springframework.security.access.AccessDeniedException;
 
 @Configuration
 @EnableWebSecurity
@@ -60,12 +65,17 @@ public class SecurityConfig {
                 c -> c
                     .requestMatchers("/carts/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/admin/**").hasRole(Role.ADMIN.name())
                     .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                     .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                     .anyRequest().authenticated()
             )
                 .exceptionHandling(c->
-                        c.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
+                {
+                    c.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+                    c.accessDeniedHandler(((HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) ->
+                            response.setStatus(HttpStatus.FORBIDDEN.value())));
+                });
         return http.build();
     }
 
