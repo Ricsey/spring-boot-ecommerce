@@ -7,3 +7,7 @@ spring:
     password: MyPassword!
   jpa:
     show-sql: true
+  jwt:
+    secret: ${JWT_SECRET}
+    accessTokenExpiration: 300 # 5 min
+    refreshTokenExpiration: 604800 # 7d
