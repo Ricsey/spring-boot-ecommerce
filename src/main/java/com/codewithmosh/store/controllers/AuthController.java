@@ -47,7 +47,7 @@ public class AuthController {
 
         var cookie = new Cookie(
                 "refreshToken",
-                refreshToken
+                refreshToken.toString()
         );
 
         cookie.setHttpOnly(true);
@@ -56,7 +56,7 @@ public class AuthController {
         cookie.setSecure(true); // https
         response.addCookie(cookie);
 
-        return ResponseEntity.ok(new JwtResponse(accessToken));
+        return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
@@ -68,15 +68,15 @@ public class AuthController {
     public ResponseEntity<JwtResponse> refreshToken(
           @CookieValue(value = "refreshToken") String refreshToken
     ) {
-        if (!jwtService.validateToken(refreshToken)) {
+        var jwt = jwtService.parseToken(refreshToken);
+        if (jwt == null || !jwt.isExpired()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        var userId = jwtService.getUserIdFromToken(refreshToken);
-        var user = userRepository.findById(userId).orElseThrow();
+        var user = userRepository.findById(jwt.getUserId()).orElseThrow();
         var accessToken = jwtService.generateAccessToken(user);
 
-        return ResponseEntity.ok(new JwtResponse(accessToken));
+        return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
 
     @GetMapping("/me")
