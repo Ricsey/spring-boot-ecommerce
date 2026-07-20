@@ -1,9 +1,11 @@
 package com.codewithmosh.store.controllers;
 
+import com.codewithmosh.store.dtos.ErrorDto;
 import com.codewithmosh.store.dtos.OrderCheckoutRequest;
 import com.codewithmosh.store.dtos.OrderCheckoutResponse;
-import com.codewithmosh.store.repositories.CartRepository;
-import com.codewithmosh.store.services.OrderService;
+import com.codewithmosh.store.exceptions.CartIsEmptyException;
+import com.codewithmosh.store.exceptions.CartNotFoundException;
+import com.codewithmosh.store.services.CheckoutService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,22 +13,23 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @AllArgsConstructor
 @RestController
 @RequestMapping("/checkout")
 public class CheckoutController {
-    private final CartRepository cartRepository;
-    private final OrderService orderService;
+    private final CheckoutService checkoutService;
 
     @PostMapping
-    public ResponseEntity<?> checkoutOrder(
+    public OrderCheckoutResponse checkoutOrder(
             @Valid @RequestBody OrderCheckoutRequest request
     ) {
-        var responseDto = orderService.checkoutOrder(request.getCartId());
+        return checkoutService.checkoutOrder(request.getCartId());
+    }
 
-        return ResponseEntity.ok(responseDto);
+    @ExceptionHandler({ CartNotFoundException.class, CartIsEmptyException.class })
+    public ResponseEntity<ErrorDto> handleException(Exception ex) {
+        return ResponseEntity.badRequest().body(new ErrorDto(ex.getMessage()));
     }
 }
