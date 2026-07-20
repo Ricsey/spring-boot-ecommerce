@@ -85,4 +85,12 @@ public class Cart {
     public void clearCartItems() {
         cartItems.clear();
     }
+
+    public boolean isEmpty() {
+        return cartItems.isEmpty();
+    }
+
+    public BigDecimal getTotalPrice() {
+        return computeTotalPrice();
+    }
 }
