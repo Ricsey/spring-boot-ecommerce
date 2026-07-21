@@ -68,6 +68,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/admin/**").hasRole(Role.ADMIN.name())
                     .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                     .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/checkout/webhook").permitAll()
                     .anyRequest().authenticated()
             )
                 .exceptionHandling(c->

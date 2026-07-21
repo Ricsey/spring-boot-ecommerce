@@ -6,30 +6,38 @@ import com.codewithmosh.store.dtos.OrderCheckoutResponse;
 import com.codewithmosh.store.exceptions.CartIsEmptyException;
 import com.codewithmosh.store.exceptions.CartNotFoundException;
 import com.codewithmosh.store.exceptions.PaymentException;
+import com.codewithmosh.store.repositories.OrderRepository;
 import com.codewithmosh.store.services.CheckoutService;
-import com.codewithmosh.store.services.PaymentGateway;
-import com.stripe.exception.StripeException;
+import com.codewithmosh.store.services.WebhookRequest;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
 
-@AllArgsConstructor
+import java.util.Map;
+
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/checkout")
 public class CheckoutController {
     private final CheckoutService checkoutService;
+    private final OrderRepository orderRepository;
 
     @PostMapping
     public OrderCheckoutResponse checkoutOrder(
             @Valid @RequestBody OrderCheckoutRequest request
     ) {
         return checkoutService.checkoutOrder(request.getCartId());
+    }
+
+    @PostMapping("/webhook")
+    public void handleWebhook(
+            @RequestHeader Map<String, String> headers,
+            @RequestBody String payload
+    ) {
+        checkoutService.handleWebhookEvent(new WebhookRequest(headers, payload));
     }
 
     @ExceptionHandler({ CartNotFoundException.class, CartIsEmptyException.class })

@@ -2,12 +2,17 @@ package com.codewithmosh.store.services;
 
 import com.codewithmosh.store.dtos.OrderCheckoutResponse;
 import com.codewithmosh.store.entities.Order;
+import com.codewithmosh.store.entities.PaymentStatus;
 import com.codewithmosh.store.exceptions.CartIsEmptyException;
 import com.codewithmosh.store.exceptions.PaymentException;
 import com.codewithmosh.store.repositories.CartRepository;
 import com.codewithmosh.store.repositories.OrderRepository;
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.Webhook;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.codewithmosh.store.exceptions.CartNotFoundException;
 
@@ -46,5 +51,15 @@ public class CheckoutService {
         }
     }
 
+    public void handleWebhookEvent(WebhookRequest webhookRequest) {
+        paymentGateway
+            .parseWebhookRequest(webhookRequest)
+            .ifPresent(paymentResult-> {
+                var order = orderRepository.findById(paymentResult.getOrderId()).orElseThrow();
+                order.setStatus(paymentResult.getPaymentStatus());
+                orderRepository.save(order);
+        });
+
+    }
 
 }
