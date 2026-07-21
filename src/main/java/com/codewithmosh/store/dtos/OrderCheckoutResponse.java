@@ -7,7 +7,12 @@ import java.math.BigInteger;
 import java.util.UUID;
 
 @Data
-@AllArgsConstructor
 public class OrderCheckoutResponse {
     private Long orderId;
+    private String checkoutUrl;
+
+    public OrderCheckoutResponse(Long orderId, String checkoutUrl) {
+        this.orderId = orderId;
+        this.checkoutUrl = checkoutUrl;
+    }
 }
